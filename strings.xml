@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">BlindGyi TTS</string>
+    <string name="input_hint">မြန်မာစာသားများကို ဤနေရာတွင် ရိုက်ထည့်ပါ...</string>
+    <string name="btn_synthesize">အသံထွက်ရန် (Synthesize)</string>
+    <string name="lang_not_supported">ဘာသာစကား အထောက်အပံ့ မရှိပါ။</string>
+    <string name="enter_text_warning">ကျေးဇူးပြု၍ စာသားထည့်ပါ။</string>
+</resources>
