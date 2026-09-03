@@ -1,0 +1,74 @@
+Name: Organize Android Project
+
+on:
+  push:
+    branches: [ main, master ]
+
+jobs:
+  organize:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Reorganize Files and Rename
+        run: |
+          # လိုအပ်သော ဖိုဒါလမ်းကြောင်းများကို ဖန်တီးခြင်း
+          mkdir -p app/src/main/java/com/blindgyi/tts
+          mkdir -p app/src/main/cpp
+          mkdir -p app/src/main/jniLibs/arm64-v8a
+          mkdir -p app/src/main/jniLibs/armeabi-v7a
+          mkdir -p app/src/main/res/layout
+          mkdir -p app/src/main/res/values
+          mkdir -p app/src/main/res/xml
+          mkdir -p .github/workflows
+
+          # ပင်မဖိုင်များကို သက်ဆိုင်ရာ နေရာသို့ ရွှေ့ခြင်း
+          [ -f "settings.gradle" ] && mv settings.gradle ./
+          [ -f "build.gradle" ] && mv build.gradle ./
+          [ -f "AndroidManifest.xml" ] && mv AndroidManifest.xml app/src/main/
+
+          # App level build ဖိုင် နာမည်အမျိုးမျိုးဖြင့် တင်လာသည်များကို 'app/build.gradle' သို့ အလိုအလျောက် ပြောင်းရွှေ့ခြင်း
+          if [ -f "App build.gridle" ]; then
+            mv "App build.gridle" app/build.gradle
+          elif [ -f "App build.gradle" ]; then
+            mv "App build.gradle" app/build.gradle
+          elif [ -f "Appbuild.gradle" ]; then
+            mv "Appbuild.gradle" app/build.gradle
+          elif [ -f "app build.gradle" ]; then
+            mv "app build.gradle" app/build.gradle
+          elif [ -f "build.gradle" ] && [ ! -f "settings.gradle" ]; then
+            mv build.gradle app/build.gradle
+          fi
+
+          # Java ဖိုင်များကို နေရာချခြင်း
+          find . -maxdepth 1 -name "*.java" -exec mv {} app/src/main/java/com/blindgyi/tts/ \;
+
+          # C++ ဖိုင်များကို နေရာချခြင်း
+          find . -maxdepth 1 \( -name "*.cpp" -o -name "*.h" -o -name "CMakeLists.txt" \) -exec mv {} app/src/main/cpp/ \;
+
+          # ====================================================
+          # .so ဖိုင်များကို သက်ဆိုင်ရာ ဖိုင်နာမည်အလိုက် နေရာချရန် (လိုအပ်ပါက အစားထိုးပါ)
+          # ====================================================
+          # 1. 32-bit (7a) အတွက် .so ဖိုင်ကို armeabi-v7a သို့ ရွှေ့ရန်
+          if [ -f "[သင့်ရဲ့_7a_ဖိုင်နာမည်.so]" ]; then
+            mv "[သင့်ရဲ့_7a_ဖိုင်နာမည်.so]" app/src/main/jniLibs/armeabi-v7a/
+          fi
+
+          # 2. 64-bit အတွက် .so ဖိုင်ကို arm64-v8a သို့ ရွှေ့ရန်
+          if [ -f "[သင့်ရဲ့_64_ဖိုင်နာမည်.so]" ]; then
+            mv "[သင့်ရဲ့_64_ဖိုင်နာမည်.so]" app/src/main/jniLibs/arm64-v8a/
+          fi
+          # ====================================================
+
+          # XML ဖိုင်များကို res/xml သို့ ရွှေ့ခြင်း
+          find . -maxdepth 1 -name "*.xml" ! -name "AndroidManifest.xml" -exec mv {} app/src/main/res/xml/ \;
+
+          # Git တွင် အပြောင်းအလဲများကို သိမ်းဆည်းရန်
+          git config --global user.name "GitHub Actions Bot"
+          git config --global user.email "actions@github.com"
+          
+          git add .
+          git commit -m "Auto-organize .so files by architecture and fix project structure" || echo "No changes to commit"
+          git push
+
